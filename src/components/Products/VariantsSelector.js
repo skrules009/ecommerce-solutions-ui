@@ -20,7 +20,14 @@ function VariantsSelector({ product, selectedSize, selectedColor, onSizeChange, 
             {selectedSize && (
               <span className="variant-selected-value">{selectedSize}</span>
             )}
-            <a href="#size-guide" className="size-guide-link">Size Guide</a>
+            <button
+              className="size-guide-link"
+              onClick={() => {}}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              aria-label="View size guide (coming soon)"
+            >
+              Size Guide
+            </button>
           </div>
           <div className="size-options">
             {sizes.map((size) => (
