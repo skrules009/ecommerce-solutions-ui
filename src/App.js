@@ -1,24 +1,30 @@
-import logo from './logo.svg';
+import React, { useEffect } from 'react';
+import { Provider, useDispatch } from 'react-redux';
+import store from './redux/store';
+import { fetchProductsSuccess } from './redux/slices/productSlice';
+import products from './data/products';
 import './App.css';
+
+function AppContent() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchProductsSuccess(products));
+  }, [dispatch]);
+
+  return (
+    <div className="App">
+      <h1>🛒 TakeCart - Ecommerce Application</h1>
+      <p>Redux Store Configured with {products.length} Products!</p>
+    </div>
+  );
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
   );
 }
 
