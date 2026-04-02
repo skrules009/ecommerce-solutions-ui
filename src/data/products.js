@@ -254,7 +254,7 @@ const products = [
     category: 'Men Fashion',
     price: 75.00,
     rating: 4.6,
-    description: 'Stylish sports jacket for men's casual outings.',
+    description: 'Stylish sports jacket for mens casual outings.',
     size: ['M', 'L'],
     color: ['Navy', 'Gray'],
     image: 'https://example.com/sports-jacket.jpg'
