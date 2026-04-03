@@ -9,6 +9,10 @@ const initialState = {
   tax: 0,
 };
 
+const TAX_RATE = 0.08;
+const FREE_SHIPPING_THRESHOLD = 50;
+const FLAT_SHIPPING_COST = 5.99;
+
 /**
  * Recomputes totalPrice, totalItems, shippingCost, and tax from the items array.
  * Free shipping on orders over $50; tax rate is 8%.
@@ -16,8 +20,11 @@ const initialState = {
 function recalculateTotals(state) {
   state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   state.totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
-  state.shippingCost = state.totalPrice >= 50 || state.items.length === 0 ? 0 : 5.99;
-  state.tax = parseFloat(((state.totalPrice + state.shippingCost) * 0.08).toFixed(2));
+  state.shippingCost =
+    state.totalPrice >= FREE_SHIPPING_THRESHOLD || state.items.length === 0
+      ? 0
+      : FLAT_SHIPPING_COST;
+  state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
 }
 
 const cartSlice = createSlice({

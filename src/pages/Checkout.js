@@ -80,6 +80,12 @@ function ShippingForm({ initial, onSubmit }) {
 }
 
 /* ===== Payment Step ===== */
+const formatCardNumber = (v) =>
+  v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+
+const formatExpiry = (v) =>
+  v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2');
+
 function PaymentForm({ initial, onBack, onSubmit }) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
@@ -99,12 +105,6 @@ function PaymentForm({ initial, onBack, onSubmit }) {
     if (Object.keys(e2).length > 0) { setErrors(e2); return; }
     onSubmit(form);
   };
-
-  const formatCardNumber = (v) =>
-    v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-
-  const formatExpiry = (v) =>
-    v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2');
 
   return (
     <form onSubmit={handleSubmit}>

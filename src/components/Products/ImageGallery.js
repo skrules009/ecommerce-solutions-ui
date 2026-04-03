@@ -18,17 +18,20 @@ function ImageGallery({ images = [], productName = '' }) {
     [safeImages.length]
   );
 
-  // Attach keyboard handler only when lightbox is open.
+  // Keyboard handler — inlined to avoid an extra useCallback dependency chain.
+  // Only attached while the lightbox is open.
   React.useEffect(() => {
     if (!lightboxOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'ArrowLeft') goTo(activeIndex - 1);
-      if (e.key === 'ArrowRight') goTo(activeIndex + 1);
+      if (e.key === 'ArrowLeft')
+        setActiveIndex((prev) => (prev - 1 + safeImages.length) % safeImages.length);
+      if (e.key === 'ArrowRight')
+        setActiveIndex((prev) => (prev + 1) % safeImages.length);
       if (e.key === 'Escape') setLightboxOpen(false);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxOpen, activeIndex, goTo]);
+  }, [lightboxOpen, safeImages.length]);
 
   const currentSrc = getImageUrl(safeImages[activeIndex]);
 

@@ -37,7 +37,7 @@ function applyAllFilters(items, filters, searchTerm) {
   if (category) result = result.filter((item) => item.category === category);
   if (minPrice != null) result = result.filter((item) => item.price >= minPrice);
   if (maxPrice != null) result = result.filter((item) => item.price <= maxPrice);
-  if (minRating != null) result = result.filter((item) => item.rating >= minRating);
+  if (minRating != null) result = result.filter((item) => (item.rating ?? 0) >= minRating);
   if (inStock) result = result.filter((item) => (item.variants?.stock ?? item.stock ?? 0) > 0);
 
   return result;
