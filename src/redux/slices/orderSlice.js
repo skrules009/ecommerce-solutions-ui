@@ -65,4 +65,9 @@ const orderSlice = createSlice({
 
 // Exporting actions and reducer
 export const { createOrder, setCurrentOrder, clearCurrentOrder } = orderSlice.actions;
+
+// Selectors
+export const selectOrders = (state) => state.orders.items;
+export const selectCurrentOrder = (state) => state.orders.currentOrder;
+
 export default orderSlice.reducer;

@@ -14,17 +14,37 @@ import { clearCart, selectCartItems, selectCartTotal, selectCartShipping, select
 import { formatPrice, getImageUrl } from '../utils/imageHelpers';
 import '../styles/checkout.css';
 
+// Indian States List
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
+  'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala',
+  'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland',
+  'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+  'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Puducherry', 'Chandigarh',
+  'Ladakh', 'Jammu and Kashmir'
+];
+
+// Payment Methods for India
+const PAYMENT_METHODS = [
+  { id: 'card', label: 'Credit/Debit Card', icon: '💳' },
+  { id: 'upi', label: 'UPI', icon: '📱' },
+  { id: 'netbanking', label: 'Net Banking', icon: '🏦' },
+  { id: 'googlepay', label: 'Google Pay', icon: '🔵' },
+  { id: 'applepay', label: 'Apple Pay', icon: '🍎' },
+];
+
 /* ===== Shipping Step ===== */
 function ShippingForm({ initial, onSubmit }) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
 
-  const required = ['firstName', 'lastName', 'email', 'address', 'city', 'state', 'zip'];
+  const required = ['firstName', 'lastName', 'email', 'address', 'city', 'state', 'pincode'];
 
   const validate = () => {
     const e = {};
     required.forEach((f) => { if (!form[f]?.trim()) e[f] = 'Required'; });
     if (form.email && !/\S+@\S+\.\S+/.test(form.email)) e.email = 'Invalid email';
+    if (form.pincode && !/^\d{6}$/.test(form.pincode.trim())) e.pincode = 'Pincode must be 6 digits';
     return e;
   };
 
@@ -54,21 +74,32 @@ function ShippingForm({ initial, onSubmit }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="checkout-form-grid">
-        {field('firstName', 'First Name', 'text', 'Jane')}
-        {field('lastName', 'Last Name', 'text', 'Smith')}
-        {field('email', 'Email Address', 'email', 'jane@example.com')}
-        {field('phone', 'Phone (optional)', 'tel', '+1 555 000 0000')}
-        {field('address', 'Street Address', 'text', '123 Main St')}
-        {field('city', 'City', 'text', 'New York')}
-        {field('state', 'State / Province', 'text', 'NY')}
-        {field('zip', 'ZIP / Postal Code', 'text', '10001')}
+        {field('firstName', 'First Name', 'text', 'John')}
+        {field('lastName', 'Last Name', 'text', 'Doe')}
+        {field('email', 'Email Address', 'email', 'john@example.com')}
+        {field('phone', 'Phone (optional)', 'tel', '+91 9876543210')}
+        {field('address', 'Street Address', 'text', '123 Main Street')}
+        {field('city', 'City', 'text', 'Mumbai')}
+        <div className="form-field">
+          <label htmlFor="ship-state">State</label>
+          <select
+            id="ship-state"
+            className={errors.state ? 'error' : ''}
+            value={form.state || ''}
+            onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))}
+          >
+            <option value="">Select State</option>
+            {INDIAN_STATES.map((state) => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
+          {errors.state && <span className="field-error">{errors.state}</span>}
+        </div>
+        {field('pincode', 'Pincode', 'text', '400001')}
         <div className="form-field">
           <label htmlFor="ship-country">Country</label>
-          <select id="ship-country" value={form.country || 'US'} onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}>
-            <option value="US">United States</option>
-            <option value="CA">Canada</option>
-            <option value="GB">United Kingdom</option>
-            <option value="AU">Australia</option>
+          <select id="ship-country" value={form.country || 'IN'} onChange={(e) => setForm((p) => ({ ...p, country: e.target.value }))}>
+            <option value="IN">India</option>
           </select>
         </div>
       </div>
@@ -80,13 +111,183 @@ function ShippingForm({ initial, onSubmit }) {
 }
 
 /* ===== Payment Step ===== */
-const formatCardNumber = (v) =>
-  v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-
-const formatExpiry = (v) =>
-  v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2');
 
 function PaymentForm({ initial, onBack, onSubmit }) {
+  const [selectedMethod, setSelectedMethod] = useState(initial.paymentMethod || 'card');
+  const [form, setForm] = useState(initial);
+  const [errors, setErrors] = useState({});
+
+  const validateCard = () => {
+    const e = {};
+    if (!form.cardName?.trim()) e.cardName = 'Required';
+    if (!form.cardNumber?.replace(/\s/g, '') || form.cardNumber.replace(/\s/g, '').length < 13) e.cardNumber = 'Enter a valid card number';
+    if (!form.cardExpiry?.trim()) e.cardExpiry = 'Required';
+    if (!form.cardCvc?.trim() || form.cardCvc.length < 3) e.cardCvc = 'Enter a valid CVC';
+    return e;
+  };
+
+  const validateUPI = () => {
+    const e = {};
+    if (!form.upiId?.trim()) e.upiId = 'Required';
+    if (form.upiId && !/^[a-zA-Z0-9.\-_]+@[a-zA-Z0-9]+$/.test(form.upiId.trim())) e.upiId = 'Invalid UPI ID (e.g., username@bank)';
+    return e;
+  };
+
+  const validateNetBanking = () => {
+    const e = {};
+    if (!form.bankName?.trim()) e.bankName = 'Required';
+    return e;
+  };
+
+  const validate = () => {
+    if (selectedMethod === 'card') return validateCard();
+    if (selectedMethod === 'upi') return validateUPI();
+    if (selectedMethod === 'netbanking') return validateNetBanking();
+    return {};
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const e2 = validate();
+    if (Object.keys(e2).length > 0) { setErrors(e2); return; }
+    onSubmit({ ...form, paymentMethod: selectedMethod });
+  };
+
+  const formatCardNumber = (v) =>
+    v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+
+  const formatExpiry = (v) =>
+    v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2');
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
+        🔒 This is a demo — no real payment is processed.
+      </p>
+
+      {/* Payment Method Selection */}
+      <div style={{ marginBottom: '30px' }}>
+        <h4 style={{ marginBottom: '15px' }}>Select Payment Method</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+          {PAYMENT_METHODS.map((method) => (
+            <button
+              key={method.id}
+              type="button"
+              onClick={() => {
+                setSelectedMethod(method.id);
+                setErrors({});
+              }}
+              style={{
+                padding: '12px',
+                border: selectedMethod === method.id ? '2px solid #3B82F6' : '1px solid #ddd',
+                borderRadius: '8px',
+                background: selectedMethod === method.id ? '#EFF6FF' : '#fff',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.2s',
+              }}
+            >
+              <div style={{ fontSize: '20px', marginBottom: '5px' }}>{method.icon}</div>
+              <div style={{ fontSize: '12px', fontWeight: '500' }}>{method.label}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Card Payment Form */}
+      {selectedMethod === 'card' && (
+        <div className="checkout-form-grid">
+          <div className="form-field full-width">
+            <label htmlFor="card-name">Name on Card</label>
+            <input id="card-name" type="text" className={errors.cardName ? 'error' : ''} value={form.cardName || ''} onChange={(e) => setForm((p) => ({ ...p, cardName: e.target.value }))} placeholder="John Doe" autoComplete="cc-name" />
+            {errors.cardName && <span className="field-error">{errors.cardName}</span>}
+          </div>
+          <div className="form-field full-width">
+            <label htmlFor="card-number">Card Number</label>
+            <input id="card-number" type="text" inputMode="numeric" className={errors.cardNumber ? 'error' : ''} value={form.cardNumber || ''} onChange={(e) => setForm((p) => ({ ...p, cardNumber: formatCardNumber(e.target.value) }))} placeholder="1234 5678 9012 3456" autoComplete="cc-number" maxLength={19} />
+            {errors.cardNumber && <span className="field-error">{errors.cardNumber}</span>}
+          </div>
+          <div className="form-field">
+            <label htmlFor="card-expiry">Expiry Date</label>
+            <input id="card-expiry" type="text" inputMode="numeric" className={errors.cardExpiry ? 'error' : ''} value={form.cardExpiry || ''} onChange={(e) => setForm((p) => ({ ...p, cardExpiry: formatExpiry(e.target.value) }))} placeholder="MM/YY" autoComplete="cc-exp" maxLength={5} />
+            {errors.cardExpiry && <span className="field-error">{errors.cardExpiry}</span>}
+          </div>
+          <div className="form-field">
+            <label htmlFor="card-cvc">CVC</label>
+            <input id="card-cvc" type="text" inputMode="numeric" className={errors.cardCvc ? 'error' : ''} value={form.cardCvc || ''} onChange={(e) => setForm((p) => ({ ...p, cardCvc: e.target.value.replace(/\D/g, '').slice(0, 4) }))} placeholder="123" autoComplete="cc-csc" maxLength={4} />
+            {errors.cardCvc && <span className="field-error">{errors.cardCvc}</span>}
+          </div>
+        </div>
+      )}
+
+      {/* UPI Payment Form */}
+      {selectedMethod === 'upi' && (
+        <div className="checkout-form-grid">
+          <div className="form-field full-width">
+            <label htmlFor="upi-id">UPI ID</label>
+            <input id="upi-id" type="text" className={errors.upiId ? 'error' : ''} value={form.upiId || ''} onChange={(e) => setForm((p) => ({ ...p, upiId: e.target.value }))} placeholder="yourname@upi" />
+            {errors.upiId && <span className="field-error">{errors.upiId}</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Net Banking Form */}
+      {selectedMethod === 'netbanking' && (
+        <div className="checkout-form-grid">
+          <div className="form-field full-width">
+            <label htmlFor="bank-name">Select Your Bank</label>
+            <select id="bank-name" className={errors.bankName ? 'error' : ''} value={form.bankName || ''} onChange={(e) => setForm((p) => ({ ...p, bankName: e.target.value }))}>
+              <option value="">Choose a bank</option>
+              <option value="HDFC">HDFC Bank</option>
+              <option value="ICICI">ICICI Bank</option>
+              <option value="SBI">State Bank of India</option>
+              <option value="Axis">Axis Bank</option>
+              <option value="Kotak">Kotak Mahindra Bank</option>
+              <option value="IndusInd">IndusInd Bank</option>
+              <option value="IDBI">IDBI Bank</option>
+              <option value="BOI">Bank of India</option>
+            </select>
+            {errors.bankName && <span className="field-error">{errors.bankName}</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Google Pay Form */}
+      {selectedMethod === 'googlepay' && (
+        <div className="checkout-form-grid">
+          <div className="form-field full-width">
+            <label htmlFor="gpay-phone">Google Pay Registered Phone Number</label>
+            <input id="gpay-phone" type="tel" value={form.gpayPhone || ''} onChange={(e) => setForm((p) => ({ ...p, gpayPhone: e.target.value }))} placeholder="+91 98765 43210" />
+          </div>
+        </div>
+      )}
+
+      {/* Apple Pay Form */}
+      {selectedMethod === 'applepay' && (
+        <div className="checkout-form-grid">
+          <div className="form-field full-width">
+            <label htmlFor="apple-email">Apple ID Email</label>
+            <input id="apple-email" type="email" value={form.appleEmail || ''} onChange={(e) => setForm((p) => ({ ...p, appleEmail: e.target.value }))} placeholder="youremail@icloud.com" />
+          </div>
+        </div>
+      )}
+
+      <div className="checkout-form-actions">
+        <button type="button" className="btn-checkout-back" onClick={onBack}>← Back</button>
+        <button type="submit" className="btn-checkout-next">Review Order →</button>
+      </div>
+    </form>
+  );
+}
+
+/* ===== Old Card Payment Form (deprecated) ===== */
+const formatCardNumber_old = (v) =>
+  v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+
+const formatExpiry_old = (v) =>
+  v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2');
+
+function PaymentForm_old({ initial, onBack, onSubmit }) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
 
@@ -119,12 +320,12 @@ function PaymentForm({ initial, onBack, onSubmit }) {
         </div>
         <div className="form-field full-width">
           <label htmlFor="card-number">Card Number</label>
-          <input id="card-number" type="text" inputMode="numeric" className={errors.cardNumber ? 'error' : ''} value={form.cardNumber || ''} onChange={(e) => setForm((p) => ({ ...p, cardNumber: formatCardNumber(e.target.value) }))} placeholder="1234 5678 9012 3456" autoComplete="cc-number" maxLength={19} />
+          <input id="card-number" type="text" inputMode="numeric" className={errors.cardNumber ? 'error' : ''} value={form.cardNumber || ''} onChange={(e) => setForm((p) => ({ ...p, cardNumber: formatCardNumber_old(e.target.value) }))} placeholder="1234 5678 9012 3456" autoComplete="cc-number" maxLength={19} />
           {errors.cardNumber && <span className="field-error">{errors.cardNumber}</span>}
         </div>
         <div className="form-field">
           <label htmlFor="card-expiry">Expiry Date</label>
-          <input id="card-expiry" type="text" inputMode="numeric" className={errors.cardExpiry ? 'error' : ''} value={form.cardExpiry || ''} onChange={(e) => setForm((p) => ({ ...p, cardExpiry: formatExpiry(e.target.value) }))} placeholder="MM/YY" autoComplete="cc-exp" maxLength={5} />
+          <input id="card-expiry" type="text" inputMode="numeric" className={errors.cardExpiry ? 'error' : ''} value={form.cardExpiry || ''} onChange={(e) => setForm((p) => ({ ...p, cardExpiry: formatExpiry_old(e.target.value) }))} placeholder="MM/YY" autoComplete="cc-exp" maxLength={5} />
           {errors.cardExpiry && <span className="field-error">{errors.cardExpiry}</span>}
         </div>
         <div className="form-field">
@@ -144,6 +345,8 @@ function PaymentForm({ initial, onBack, onSubmit }) {
 /* ===== Review Step ===== */
 function OrderReview({ items, shippingAddress, paymentMethod, subtotal, shipping, tax, grandTotal, onBack, onPlace, isLoading }) {
   const addr = shippingAddress;
+  const paymentMethodLabel = PAYMENT_METHODS.find(m => m.id === paymentMethod.paymentMethod)?.label || 'Card';
+  
   return (
     <div>
       <div className="review-section">
@@ -152,16 +355,40 @@ function OrderReview({ items, shippingAddress, paymentMethod, subtotal, shipping
           <div>
             <div className="review-detail-row"><strong>Name:</strong> {addr.firstName} {addr.lastName}</div>
             <div className="review-detail-row"><strong>Email:</strong> {addr.email}</div>
-            <div className="review-detail-row"><strong>Address:</strong> {addr.address}, {addr.city}, {addr.state} {addr.zip}, {addr.country}</div>
+            <div className="review-detail-row"><strong>Address:</strong> {addr.address}, {addr.city}, {addr.state} {addr.pincode}, {addr.country}</div>
           </div>
         )}
       </div>
       <div className="review-section">
-        <h3>Payment</h3>
+        <h3>Payment Method</h3>
         <div className="review-detail-row">
-          <strong>Card:</strong> **** **** **** {paymentMethod.cardNumber?.replace(/\s/g, '').slice(-4) || '****'}
+          <strong>Method:</strong> {paymentMethodLabel}
         </div>
-        <div className="review-detail-row"><strong>Name:</strong> {paymentMethod.cardName}</div>
+        {paymentMethod.paymentMethod === 'card' && (
+          <div className="review-detail-row">
+            <strong>Card:</strong> **** **** **** {paymentMethod.cardNumber?.replace(/\s/g, '').slice(-4) || '****'}
+          </div>
+        )}
+        {paymentMethod.paymentMethod === 'upi' && (
+          <div className="review-detail-row">
+            <strong>UPI ID:</strong> {paymentMethod.upiId}
+          </div>
+        )}
+        {paymentMethod.paymentMethod === 'netbanking' && (
+          <div className="review-detail-row">
+            <strong>Bank:</strong> {paymentMethod.bankName}
+          </div>
+        )}
+        {paymentMethod.paymentMethod === 'googlepay' && (
+          <div className="review-detail-row">
+            <strong>Phone:</strong> {paymentMethod.gpayPhone}
+          </div>
+        )}
+        {paymentMethod.paymentMethod === 'applepay' && (
+          <div className="review-detail-row">
+            <strong>Apple ID:</strong> {paymentMethod.appleEmail}
+          </div>
+        )}
       </div>
       <div className="review-section">
         <h3>Items ({items.length})</h3>
@@ -324,7 +551,7 @@ function Checkout() {
               <span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
             </div>
             <div className="checkout-summary-row">
-              <span>Tax (8%)</span>
+              <span>Tax (18% GST)</span>
               <span>{formatPrice(tax)}</span>
             </div>
             <div className="checkout-summary-row total">

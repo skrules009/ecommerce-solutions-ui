@@ -9,21 +9,18 @@ const initialState = {
   tax: 0,
 };
 
-const TAX_RATE = 0.08;
-const FREE_SHIPPING_THRESHOLD = 50;
-const FLAT_SHIPPING_COST = 5.99;
+const TAX_RATE = 0.18; // 18% GST (Indian standard)
+const FREE_SHIPPING_THRESHOLD = 0; // Free shipping for all orders
+const FLAT_SHIPPING_COST = 0; // Free shipping
 
 /**
  * Recomputes totalPrice, totalItems, shippingCost, and tax from the items array.
- * Free shipping on orders over $50; tax rate is 8%.
+ * Free shipping for all orders; tax rate is 18% GST (Indian).
  */
 function recalculateTotals(state) {
   state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   state.totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
-  state.shippingCost =
-    state.totalPrice >= FREE_SHIPPING_THRESHOLD || state.items.length === 0
-      ? 0
-      : FLAT_SHIPPING_COST;
+  state.shippingCost = 0; // Free shipping for all orders
   state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
 }
 

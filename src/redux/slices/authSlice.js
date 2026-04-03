@@ -34,11 +34,16 @@ const authSlice = createSlice({
       state.error = null;
       try { localStorage.removeItem('token'); } catch (_) {}
     },
+    updateUserProfile: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
     clearError: (state) => {
       state.error = null;
     },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout, clearError } = authSlice.actions;
+export const { loginStart, loginSuccess, loginFailure, logout, updateUserProfile, clearError } = authSlice.actions;
 export default authSlice.reducer;

@@ -130,18 +130,13 @@ function Cart() {
             </div>
             <div className={`cart-summary-row${shipping === 0 ? ' shipping-free' : ''}`}>
               <span>Shipping</span>
-              <span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
+              <span>{'FREE'}</span>
             </div>
-            {shipping === 0 && subtotal > 0 && (
-              <p className="cart-promo-note">✅ You qualify for free shipping!</p>
-            )}
-            {shipping > 0 && (
-              <p className="cart-promo-note">
-                Add {formatPrice(50 - subtotal)} more for free shipping
-              </p>
+            {subtotal > 0 && (
+              <p className="cart-promo-note">✅ Free shipping on all orders!</p>
             )}
             <div className="cart-summary-row">
-              <span>Estimated Tax (8%)</span>
+              <span>Estimated Tax (18% GST)</span>
               <span>{formatPrice(tax)}</span>
             </div>
             <div className="cart-summary-row total">

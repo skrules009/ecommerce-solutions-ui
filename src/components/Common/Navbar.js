@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/slices/authSlice';
@@ -14,6 +14,8 @@ function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef(null);
 
   const cartCount = useSelector(selectCartItemCount);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -22,10 +24,22 @@ function Navbar() {
   const handleLogout = () => {
     dispatch(logout());
     setMenuOpen(false);
+    setUserDropdownOpen(false);
     navigate('/');
   };
 
   const closeMenu = () => setMenuOpen(false);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <nav className="navbar" role="navigation" aria-label="Main navigation">
@@ -77,13 +91,72 @@ function Navbar() {
 
           {isAuthenticated ? (
             <>
-              <li>
-                <span style={{ padding: '8px 12px', fontSize: '14px', color: 'var(--text-muted)' }}>
-                  Hi, {user?.name || 'User'}
-                </span>
-              </li>
-              <li>
-                <button onClick={handleLogout}>Sign Out</button>
+              <li ref={userDropdownRef} className="user-dropdown-container">
+                <button
+                  className="user-dropdown-btn"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  aria-label="User menu"
+                >
+                  👤 {user?.name || 'User'}
+                </button>
+                {userDropdownOpen && (
+                  <div className="user-dropdown-menu">
+                    <div className="dropdown-header">
+                      <div className="dropdown-user-info">
+                        <div className="dropdown-user-name">{user?.name}</div>
+                        <div className="dropdown-user-email">{user?.email}</div>
+                      </div>
+                    </div>
+                    <div className="dropdown-divider"></div>
+                    <Link
+                      to="/account"
+                      className="dropdown-item"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        closeMenu();
+                      }}
+                    >
+                      👤 My Account
+                    </Link>
+                    <Link
+                      to="/account"
+                      className="dropdown-item"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        closeMenu();
+                      }}
+                    >
+                      📦 My Orders
+                    </Link>
+                    <Link
+                      to="/account"
+                      className="dropdown-item"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        closeMenu();
+                      }}
+                    >
+                      📍 Addresses
+                    </Link>
+                    <Link
+                      to="/account"
+                      className="dropdown-item"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        closeMenu();
+                      }}
+                    >
+                      ⚙️ Settings
+                    </Link>
+                    <div className="dropdown-divider"></div>
+                    <button
+                      className="dropdown-item dropdown-logout"
+                      onClick={handleLogout}
+                    >
+                      🚪 Sign Out
+                    </button>
+                  </div>
+                )}
               </li>
             </>
           ) : (

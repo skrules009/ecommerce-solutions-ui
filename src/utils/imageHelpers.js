@@ -65,14 +65,16 @@ export function getStarArray(rating) {
 }
 
 // Single Intl instance for performance — avoids re-creating on every call.
-const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+// Using Indian locale (en-IN) for Indian numbering system (10,00,000)
+const priceFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
 /**
- * Formats a price number as a USD currency string using the browser's Intl API.
+ * Formats a price number as an INR currency string using the browser's Intl API.
+ * Uses Indian number format (e.g., 10,00,000).
  * @param {number} price
  * @returns {string}
  */
 export function formatPrice(price) {
-  if (typeof price !== 'number' || isNaN(price)) return '$0.00';
+  if (typeof price !== 'number' || isNaN(price)) return '₹0.00';
   return priceFormatter.format(price);
 }
