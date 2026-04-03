@@ -3,16 +3,19 @@ import { getStarArray } from '../../utils/imageHelpers';
 
 /**
  * Product Rating Component — shows average rating + distribution bars.
+ * Distribution percentages are calculated from the actual reviews array length
+ * so the bars accurately reflect the provided review data.
  */
 function ProductRating({ product }) {
   if (!product) return null;
 
-  const { rating = 0, reviewCount = 0, reviews = [] } = product;
+  const { rating = 0, reviews = [] } = product;
+  const totalReviews = reviews.length;
 
-  // Build distribution from reviews array
+  // Build distribution from the actual reviews array (not the static reviewCount field)
   const distribution = [5, 4, 3, 2, 1].map((star) => {
     const count = reviews.filter((r) => Math.round(r.rating) === star).length;
-    const pct = reviewCount > 0 ? Math.round((count / reviewCount) * 100) : 0;
+    const pct = totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0;
     return { star, count, pct };
   });
 
@@ -34,7 +37,7 @@ function ProductRating({ product }) {
               </span>
             ))}
           </div>
-          <div className="rating-big-count">{reviewCount} reviews</div>
+          <div className="rating-big-count">{totalReviews} reviews</div>
         </div>
 
         {/* Rating Bars */}

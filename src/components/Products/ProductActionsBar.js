@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { addNotification } from '../../redux/slices/uiSlice';
 
 /**
  * Product Actions Bar — share, report, ask question buttons.
  */
 function ProductActionsBar({ product }) {
+  const dispatch = useDispatch();
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -30,14 +33,26 @@ function ProductActionsBar({ product }) {
       label: 'Copy Link',
       icon: '🔗',
       action: () => {
-        navigator.clipboard.writeText(productUrl).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        });
+        navigator.clipboard.writeText(productUrl)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          })
+          .catch(() => {
+            dispatch(addNotification({ id: Date.now(), type: 'error', message: 'Could not copy link. Please copy the URL from your browser.' }));
+          });
         setShareOpen(false);
       },
     },
   ];
+
+  const handleReport = () => {
+    dispatch(addNotification({ id: Date.now(), type: 'info', message: 'Thank you for your report. Our team will review this product.' }));
+  };
+
+  const handleAskQuestion = () => {
+    dispatch(addNotification({ id: Date.now(), type: 'info', message: 'Q&A feature coming soon! For now, please contact our support team.' }));
+  };
 
   return (
     <div className="product-actions-bar">
@@ -69,12 +84,12 @@ function ProductActionsBar({ product }) {
       </div>
 
       {/* Report */}
-      <button className="action-btn" aria-label="Report product">
+      <button className="action-btn" onClick={handleReport} aria-label="Report product">
         🚩 Report
       </button>
 
       {/* Ask Question */}
-      <button className="action-btn" aria-label="Ask a question about this product">
+      <button className="action-btn" onClick={handleAskQuestion} aria-label="Ask a question about this product">
         ❓ Ask a Question
       </button>
     </div>

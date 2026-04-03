@@ -1,14 +1,21 @@
 import React from 'react';
+import { useDispatch } from 'react-redux';
 import { getColorValue } from '../../utils/imageHelpers';
+import { addNotification } from '../../redux/slices/uiSlice';
 
 /**
  * Product Variants Selector Component
  */
 function VariantsSelector({ product, selectedSize, selectedColor, onSizeChange, onColorChange }) {
+  const dispatch = useDispatch();
   if (!product) return null;
 
   const sizes = product.variants?.sizes || (Array.isArray(product.size) ? product.size : []);
   const colors = product.variants?.colors || product.color || [];
+
+  const handleSizeGuide = () => {
+    dispatch(addNotification({ id: Date.now(), type: 'info', message: 'Size guide coming soon! Check the product description for material and fit details.' }));
+  };
 
   return (
     <div className="variants-selector">
@@ -22,9 +29,9 @@ function VariantsSelector({ product, selectedSize, selectedColor, onSizeChange, 
             )}
             <button
               className="size-guide-link"
-              onClick={() => {}}
+              onClick={handleSizeGuide}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              aria-label="View size guide (coming soon)"
+              aria-label="View size guide"
             >
               Size Guide
             </button>

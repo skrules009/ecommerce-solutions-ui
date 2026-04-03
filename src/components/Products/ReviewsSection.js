@@ -6,7 +6,9 @@ const INITIAL_COUNT = 5;
 function ReviewCard({ review }) {
   const [expanded, setExpanded] = useState(false);
   const [helpful, setHelpful] = useState(review.helpful || 0);
+  const [notHelpful, setNotHelpful] = useState(review.notHelpful || 0);
   const [votedHelpful, setVotedHelpful] = useState(false);
+  const [votedNotHelpful, setVotedNotHelpful] = useState(false);
 
   const isLong = review.text && review.text.length > 200;
 
@@ -61,7 +63,18 @@ function ReviewCard({ review }) {
         >
           👍 Yes ({helpful})
         </button>
-        <button className="helpful-btn">👎 No ({review.notHelpful || 0})</button>
+        <button
+          className="helpful-btn"
+          onClick={() => {
+            if (!votedNotHelpful) {
+              setNotHelpful((prev) => prev + 1);
+              setVotedNotHelpful(true);
+            }
+          }}
+          disabled={votedNotHelpful}
+        >
+          👎 No ({notHelpful})
+        </button>
       </div>
     </div>
   );
@@ -74,8 +87,11 @@ function ReviewsSection({ reviews = [] }) {
   const [sortBy, setSortBy] = useState('newest');
   const [filterRating, setFilterRating] = useState('all');
   const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+  const [showForm, setShowForm] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 5, title: '', text: '', author: '' });
+  const [localReviews, setLocalReviews] = useState(reviews);
 
-  const sorted = [...reviews].sort((a, b) => {
+  const sorted = [...localReviews].sort((a, b) => {
     if (sortBy === 'newest') return new Date(b.date) - new Date(a.date);
     if (sortBy === 'rating-high') return b.rating - a.rating;
     if (sortBy === 'rating-low') return a.rating - b.rating;
@@ -90,14 +106,84 @@ function ReviewsSection({ reviews = [] }) {
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
+  const handleSubmitReview = (e) => {
+    e.preventDefault();
+    if (!newReview.text.trim() || !newReview.author.trim()) return;
+    const review = {
+      id: 'r-' + Date.now(),
+      author: newReview.author,
+      avatar: null,
+      rating: newReview.rating,
+      title: newReview.title,
+      text: newReview.text,
+      date: new Date().toISOString().split('T')[0],
+      helpful: 0,
+      notHelpful: 0,
+      verified: false,
+    };
+    setLocalReviews((prev) => [review, ...prev]);
+    setNewReview({ rating: 5, title: '', text: '', author: '' });
+    setShowForm(false);
+  };
+
   return (
     <div className="reviews-section">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+      <div className="reviews-section-header">
         <h2 className="section-title" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
-          Customer Reviews ({reviews.length})
+          Customer Reviews ({localReviews.length})
         </h2>
-        <button className="btn-write-review">✏️ Write a Review</button>
+        <button className="btn-write-review" onClick={() => setShowForm((v) => !v)}>
+          ✏️ {showForm ? 'Cancel' : 'Write a Review'}
+        </button>
       </div>
+
+      {/* Write a Review Form */}
+      {showForm && (
+        <form className="review-form" onSubmit={handleSubmitReview}>
+          <h3 className="review-form-title">Write a Review</h3>
+          <div className="review-form-row">
+            <label>Your Name</label>
+            <input
+              type="text"
+              value={newReview.author}
+              onChange={(e) => setNewReview((p) => ({ ...p, author: e.target.value }))}
+              placeholder="Jane D."
+              required
+            />
+          </div>
+          <div className="review-form-row">
+            <label>Rating</label>
+            <select
+              value={newReview.rating}
+              onChange={(e) => setNewReview((p) => ({ ...p, rating: Number(e.target.value) }))}
+            >
+              {[5, 4, 3, 2, 1].map((r) => (
+                <option key={r} value={r}>{r} Star{r !== 1 ? 's' : ''}</option>
+              ))}
+            </select>
+          </div>
+          <div className="review-form-row">
+            <label>Title</label>
+            <input
+              type="text"
+              value={newReview.title}
+              onChange={(e) => setNewReview((p) => ({ ...p, title: e.target.value }))}
+              placeholder="Summary of your experience"
+            />
+          </div>
+          <div className="review-form-row">
+            <label>Review</label>
+            <textarea
+              value={newReview.text}
+              onChange={(e) => setNewReview((p) => ({ ...p, text: e.target.value }))}
+              placeholder="Share your thoughts about this product..."
+              rows={4}
+              required
+            />
+          </div>
+          <button type="submit" className="btn-submit-review">Submit Review</button>
+        </form>
+      )}
 
       {/* Controls */}
       <div className="reviews-controls">

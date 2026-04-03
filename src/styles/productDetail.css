@@ -1,30 +1,11 @@
 /* Product Detail Page Styles */
-:root {
-  --primary: #6366F1;
-  --primary-dark: #4f46e5;
-  --secondary: #EC4899;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
-  --bg: #F9FAFB;
-  --white: #FFFFFF;
-  --text-dark: #1F2937;
-  --text-muted: #6B7280;
-  --border: #E5E7EB;
-  --shadow: 0 2px 8px rgba(0,0,0,0.08);
-  --radius: 8px;
-}
+/* Note: :root design tokens are defined in index.css */
 
 /* ===== Breadcrumb ===== */
 .breadcrumb-nav {
   background: var(--white);
   border-bottom: 1px solid var(--border);
   padding: 12px 0;
-}
-.breadcrumb-nav .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px;
 }
 .breadcrumb-list {
   display: flex;
@@ -56,11 +37,6 @@
 .product-detail-page {
   background: var(--bg);
   min-height: 100vh;
-}
-.product-detail-page .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 16px;
 }
 
 /* ===== Image Gallery ===== */
@@ -915,6 +891,88 @@
   transition: background 0.2s;
 }
 .btn-write-review:hover { background: var(--primary-dark); }
+.reviews-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* ===== Review Form ===== */
+.review-form {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.review-form-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 16px 0;
+}
+.review-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.review-form-row label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.review-form-row input,
+.review-form-row select,
+.review-form-row textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-dark);
+  background: var(--white);
+  font-family: inherit;
+  resize: vertical;
+}
+.review-form-row input:focus,
+.review-form-row select:focus,
+.review-form-row textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+.btn-submit-review {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-submit-review:hover { background: var(--primary-dark); }
+
+/* ===== Quick View variant rows ===== */
+.qv-variant-row {
+  margin: 10px 0;
+}
+.qv-variant-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  display: block;
+  margin-bottom: 6px;
+}
+.qv-variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
 /* ===== Related Products ===== */
 .related-products {
