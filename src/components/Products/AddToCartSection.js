@@ -24,6 +24,7 @@ function AddToCartSection({ product, selectedSize, selectedColor }) {
     if (!product) return;
     dispatch(
       addToCart({
+        cartId: `${product.id}-${selectedSize || 'none'}-${selectedColor || 'none'}`,
         id: product.id,
         name: product.name,
         price: product.price,

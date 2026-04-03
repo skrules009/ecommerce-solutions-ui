@@ -1,6 +1,6 @@
 /**
  * imageHelpers.js
- * Utility functions for image handling and optimization.
+ * Utility functions for image handling, price formatting, and display helpers.
  */
 
 const FALLBACK_IMAGE = 'https://picsum.photos/seed/fallback/600/600';
@@ -16,19 +16,6 @@ export function getImageUrl(src, fallback = FALLBACK_IMAGE) {
     return fallback;
   }
   return src;
-}
-
-/**
- * Returns the first image from an array, or the fallback.
- * @param {string[]} images
- * @param {string} [fallback]
- * @returns {string}
- */
-export function getPrimaryImage(images, fallback = FALLBACK_IMAGE) {
-  if (Array.isArray(images) && images.length > 0) {
-    return getImageUrl(images[0], fallback);
-  }
-  return fallback;
 }
 
 /**
@@ -59,8 +46,8 @@ export function getColorValue(colorName) {
 }
 
 /**
- * Generates an array of star values (filled, half, empty) for a given rating.
- * @param {number} rating  - Rating value (0-5)
+ * Generates an array of star descriptors (filled, half, empty) for a given rating.
+ * @param {number} rating  - Rating value (0–5)
  * @returns {{ type: 'filled'|'half'|'empty', key: number }[]}
  */
 export function getStarArray(rating) {
@@ -77,12 +64,15 @@ export function getStarArray(rating) {
   return stars;
 }
 
+// Single Intl instance for performance — avoids re-creating on every call.
+const priceFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
 /**
- * Formats a price number as a USD string.
+ * Formats a price number as a USD currency string using the browser's Intl API.
  * @param {number} price
  * @returns {string}
  */
 export function formatPrice(price) {
   if (typeof price !== 'number' || isNaN(price)) return '$0.00';
-  return `$${price.toFixed(2)}`;
+  return priceFormatter.format(price);
 }

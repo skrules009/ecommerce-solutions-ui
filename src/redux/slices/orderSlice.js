@@ -13,11 +13,21 @@ const initialState = {
 };
 
 // Async thunk for fetching orders
-export const fetchOrders = createAsyncThunk('orders/fetchOrders', async (page = 1) => {
-  const response = await fetch(`/api/orders?page=${page}`);
-  const data = await response.json();
-  return data;
-});
+export const fetchOrders = createAsyncThunk(
+  'orders/fetchOrders',
+  async (page = 1, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`/api/orders?page=${page}`);
+      if (!response.ok) {
+        return rejectWithValue(`Request failed with status ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.message || 'Network error');
+    }
+  }
+);
 
 // Redux slice for orders management
 const orderSlice = createSlice({
@@ -26,6 +36,7 @@ const orderSlice = createSlice({
   reducers: {
     createOrder: (state, action) => {
       state.items.push(action.payload);
+      state.currentOrder = action.payload;
     },
     setCurrentOrder: (state, action) => {
       state.currentOrder = action.payload;
@@ -47,7 +58,7 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload || action.error.message;
       });
   },
 });

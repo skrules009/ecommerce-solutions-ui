@@ -1,14 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../../redux/slices/cartSlice';
 import { formatPrice, getImageUrl, getStarArray } from '../../utils/imageHelpers';
 
 /**
- * Quick View Modal Component
+ * Quick View Modal Component.
+ * Selects default size/color so the item is always added to the cart
+ * with a valid variant combination.
  */
 function QuickViewModal({ product, onClose }) {
   const dispatch = useDispatch();
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
 
   // Close on Escape key
   useEffect(() => {
@@ -17,21 +21,37 @@ function QuickViewModal({ product, onClose }) {
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
+  // Initialise default variant selections when product changes
+  useEffect(() => {
+    if (product) {
+      const sizes = product.variants?.sizes || (Array.isArray(product.size) ? product.size : []);
+      const colors = product.variants?.colors || product.color || [];
+      if (sizes.length > 0) setSelectedSize(String(sizes[0]));
+      if (colors.length > 0) setSelectedColor(colors[0]);
+    }
+  }, [product?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!product) return null;
 
   const handleAddToCart = () => {
     dispatch(
       addToCart({
+        cartId: `${product.id}-${selectedSize || 'none'}-${selectedColor || 'none'}`,
         id: product.id,
         name: product.name,
         price: product.price,
         image: product.images?.[0] || product.image,
         quantity: 1,
+        selectedSize,
+        selectedColor,
         category: product.category,
       })
     );
     onClose();
   };
+
+  const sizes = product.variants?.sizes || (Array.isArray(product.size) ? product.size : []);
+  const colors = product.variants?.colors || product.color || [];
 
   return (
     <div
@@ -85,6 +105,41 @@ function QuickViewModal({ product, onClose }) {
                 <span className="discount-badge">-{product.discount}%</span>
               )}
             </div>
+
+            {/* Variant selectors */}
+            {sizes.length > 0 && (
+              <div className="qv-variant-row">
+                <span className="qv-variant-label">Size:</span>
+                <div className="qv-variant-options">
+                  {sizes.map((s) => (
+                    <button
+                      key={s}
+                      className={`size-btn${selectedSize === String(s) ? ' selected' : ''}`}
+                      onClick={() => setSelectedSize(String(s))}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {colors.length > 0 && (
+              <div className="qv-variant-row">
+                <span className="qv-variant-label">Color: <strong>{selectedColor}</strong></span>
+                <div className="qv-variant-options">
+                  {colors.map((c) => (
+                    <button
+                      key={c}
+                      className={`color-btn${selectedColor === c ? ' selected' : ''}`}
+                      onClick={() => setSelectedColor(c)}
+                      aria-label={`Select ${c}`}
+                    >
+                      <div className="color-swatch" style={{ backgroundColor: require('../../utils/imageHelpers').getColorValue(c) }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '0' }}>
               {product.description}

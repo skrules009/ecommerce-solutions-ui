@@ -1,28 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { getImageUrl } from '../../utils/imageHelpers';
 
 /**
- * Image Gallery Component with zoom, lightbox, and keyboard navigation.
+ * Image Gallery Component with lightbox and keyboard navigation.
+ * The keyboard listener is only attached while the lightbox is open,
+ * so arrow-key presses never fire outside of the lightbox context.
  */
 function ImageGallery({ images = [], productName = '' }) {
   const safeImages = images.length > 0 ? images : [null];
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const goTo = useCallback((index) => {
-    setActiveIndex((index + safeImages.length) % safeImages.length);
-  }, [safeImages.length]);
+  const goTo = useCallback(
+    (index) => {
+      setActiveIndex((index + safeImages.length) % safeImages.length);
+    },
+    [safeImages.length]
+  );
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'ArrowLeft') goTo(activeIndex - 1);
-    if (e.key === 'ArrowRight') goTo(activeIndex + 1);
-    if (e.key === 'Escape') setLightboxOpen(false);
-  }, [activeIndex, goTo]);
-
-  useEffect(() => {
+  // Keyboard handler — inlined to avoid an extra useCallback dependency chain.
+  // Only attached while the lightbox is open.
+  React.useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft')
+        setActiveIndex((prev) => (prev - 1 + safeImages.length) % safeImages.length);
+      if (e.key === 'ArrowRight')
+        setActiveIndex((prev) => (prev + 1) % safeImages.length);
+      if (e.key === 'Escape') setLightboxOpen(false);
+    };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  }, [lightboxOpen, safeImages.length]);
 
   const currentSrc = getImageUrl(safeImages[activeIndex]);
 
