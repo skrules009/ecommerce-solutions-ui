@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createSelector } from '@reduxjs/toolkit';
 
 const initialState = {
   items: [],
@@ -131,14 +131,19 @@ export const selectProductReviews = (state) => state.products.reviews;
 
 export const selectSelectedProduct = (state) => state.products.selectedProduct;
 
-export const selectAllCategories = (state) =>
-  [...new Set(state.products.items.map((p) => p.category))].sort();
+export const selectAllCategories = createSelector(
+  (state) => state.products.items,
+  (items) => [...new Set(items.map((p) => p.category))].sort()
+);
 
-export const selectPaginatedProducts = (state) => {
-  const { filteredItems, pagination } = state.products;
-  const { currentPage, pageSize } = pagination;
-  const start = (currentPage - 1) * pageSize;
-  return filteredItems.slice(start, start + pageSize);
-};
+export const selectPaginatedProducts = createSelector(
+  (state) => state.products.filteredItems,
+  (state) => state.products.pagination,
+  (filteredItems, pagination) => {
+    const { currentPage, pageSize } = pagination;
+    const start = (currentPage - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }
+);
 
 export default productSlice.reducer;
