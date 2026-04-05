@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { addToCart } from '../../redux/slices/cartSlice';
+import { addItemToCart } from '../../redux/slices/cartSlice';
 import { formatPrice, getImageUrl, getStarArray } from '../../utils/imageHelpers';
 
 /**
@@ -35,7 +35,7 @@ function QuickViewModal({ product, onClose }) {
 
   const handleAddToCart = () => {
     dispatch(
-      addToCart({
+      addItemToCart({
         cartId: `${product.id}-${selectedSize || 'none'}-${selectedColor || 'none'}`,
         id: product.id,
         name: product.name,

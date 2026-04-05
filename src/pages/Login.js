@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginStart, loginSuccess, clearError } from '../redux/slices/authSlice';
+import {
+  loginUser,
+  selectAuthLoading,
+  selectAuthError,
+  selectIsAuthenticated,
+  clearError
+} from '../redux/slices/authSlice';
 import '../styles/auth.css';
 
 function Login() {
@@ -9,7 +15,9 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { isLoading, error, isAuthenticated } = useSelector((state) => state.auth);
+  const isLoading = useSelector(selectAuthLoading);
+  const error = useSelector(selectAuthError);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   const [form, setForm] = useState({ email: '', password: '' });
   const [formErrors, setFormErrors] = useState({});
 
@@ -32,7 +40,7 @@ function Login() {
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validate();
     if (Object.keys(errors).length > 0) {
@@ -40,16 +48,17 @@ function Login() {
       return;
     }
     setFormErrors({});
-    dispatch(loginStart());
-    // Mock authentication — accepts any valid-looking credentials
-    setTimeout(() => {
-      dispatch(
-        loginSuccess({
-          user: { id: Date.now(), name: form.email.split('@')[0], email: form.email },
-          token: 'mock-jwt-token-' + Date.now(),
-        })
-      );
-    }, 700);
+
+    // Call the real async thunk
+    const result = await dispatch(loginUser({
+      email: form.email,
+      password: form.password
+    }));
+
+    // Check if login was successful
+    if (result.payload) {
+      navigate(from, { replace: true });
+    }
   };
 
   return (
@@ -59,10 +68,6 @@ function Login() {
           <h1>Welcome back</h1>
           <p>Sign in to your TakeCart account</p>
         </div>
-
-        <p className="auth-demo-hint">
-          🔑 Demo mode — any valid email &amp; password (6+ chars) will sign you in.
-        </p>
 
         {error && <div className="auth-error">{error}</div>}
 

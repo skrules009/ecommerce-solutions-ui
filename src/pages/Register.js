@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginStart, loginSuccess, clearError } from '../redux/slices/authSlice';
+import {
+  registerUser,
+  selectRegistering,
+  selectRegisterError,
+  selectIsAuthenticated,
+  clearRegisterError
+} from '../redux/slices/authSlice';
 import '../styles/auth.css';
 
 function Register() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { isLoading, isAuthenticated } = useSelector((state) => state.auth);
+  const isLoading = useSelector(selectRegistering);
+  const error = useSelector(selectRegisterError);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
   const [formErrors, setFormErrors] = useState({});
 
@@ -16,7 +24,7 @@ function Register() {
     if (isAuthenticated) navigate('/', { replace: true });
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => () => dispatch(clearError()), [dispatch]);
+  useEffect(() => () => dispatch(clearRegisterError()), [dispatch]);
 
   const validate = () => {
     const errors = {};
@@ -29,7 +37,7 @@ function Register() {
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validate();
     if (Object.keys(errors).length > 0) {
@@ -37,16 +45,20 @@ function Register() {
       return;
     }
     setFormErrors({});
-    dispatch(loginStart());
-    // Mock registration
-    setTimeout(() => {
-      dispatch(
-        loginSuccess({
-          user: { id: Date.now(), name: form.name, email: form.email },
-          token: 'mock-jwt-token-' + Date.now(),
-        })
-      );
-    }, 700);
+
+    // Call the real async thunk
+    const result = await dispatch(registerUser({
+      email: form.email,
+      password: form.password,
+      firstName: form.name.split(' ')[0],
+      lastName: form.name.split(' ').slice(1).join(' ') || '',
+      phone: ''
+    }));
+
+    // Check if registration was successful
+    if (result.payload) {
+      navigate('/', { replace: true });
+    }
   };
 
   return (
@@ -57,9 +69,7 @@ function Register() {
           <p>Join TakeCart and start shopping</p>
         </div>
 
-        <p className="auth-demo-hint">
-          🔑 Demo mode — fill in any valid details to create an account instantly.
-        </p>
+        {error && <div className="auth-error">{error}</div>}
 
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { addToCart } from '../../redux/slices/cartSlice';
+import { addItemToCart } from '../../redux/slices/cartSlice';
 import { formatPrice } from '../../utils/imageHelpers';
 
 /**
@@ -23,7 +23,7 @@ function AddToCartSection({ product, selectedSize, selectedColor }) {
   const handleAddToCart = () => {
     if (!product) return;
     dispatch(
-      addToCart({
+      addItemToCart({
         cartId: `${product.id}-${selectedSize || 'none'}-${selectedColor || 'none'}`,
         id: product.id,
         name: product.name,

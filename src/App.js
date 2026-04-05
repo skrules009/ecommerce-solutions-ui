@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import store from './redux/store';
-import { fetchProductsSuccess } from './redux/slices/productSlice';
-import products from './data/products';
+import { fetchProducts } from './redux/slices/productSlice';
 
 // Layout components
 import Navbar from './components/Common/Navbar';
@@ -30,7 +29,7 @@ function AppContent() {
 
   // Seed the product store from static data
   useEffect(() => {
-    dispatch(fetchProductsSuccess(products));
+    dispatch(fetchProducts());
   }, [dispatch]);
 
   // Bind dark mode to a data attribute on <body> so CSS variables take effect

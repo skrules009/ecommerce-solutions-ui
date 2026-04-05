@@ -2,9 +2,9 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  removeFromCart,
-  updateQuantity,
-  clearCart,
+  removeItemFromCart,
+  updateCartItem,
+  clearCartAsync,
   selectCartItems,
   selectCartTotal,
   selectCartShipping,
@@ -53,7 +53,7 @@ function Cart() {
               <span className="cart-items-count">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
               <button
                 className="btn-clear-cart"
-                onClick={() => dispatch(clearCart())}
+                onClick={() => dispatch(clearCartAsync())}
                 aria-label="Remove all items from cart"
               >
                 Clear Cart
@@ -89,7 +89,7 @@ function Cart() {
                       <button
                         className="cart-qty-btn"
                         onClick={() =>
-                          dispatch(updateQuantity({ cartId: item.cartId, quantity: item.quantity - 1 }))
+                          dispatch(updateCartItem({ cartId: item.cartId, quantity: item.quantity - 1 }))
                         }
                         disabled={item.quantity <= 1}
                         aria-label="Decrease quantity"
@@ -100,7 +100,7 @@ function Cart() {
                       <button
                         className="cart-qty-btn"
                         onClick={() =>
-                          dispatch(updateQuantity({ cartId: item.cartId, quantity: item.quantity + 1 }))
+                          dispatch(updateCartItem({ cartId: item.cartId, quantity: item.quantity + 1 }))
                         }
                         aria-label="Increase quantity"
                       >
@@ -109,7 +109,7 @@ function Cart() {
                     </div>
                     <button
                       className="btn-remove-item"
-                      onClick={() => dispatch(removeFromCart(item.cartId))}
+                      onClick={() => dispatch(removeItemFromCart(item.cartId))}
                       aria-label={`Remove ${item.name} from cart`}
                     >
                       Remove

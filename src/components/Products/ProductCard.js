@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { addToCart } from '../../redux/slices/cartSlice';
+import { addItemToCart } from '../../redux/slices/cartSlice';
 import { formatPrice, getImageUrl } from '../../utils/imageHelpers';
 
 /**
@@ -22,7 +22,7 @@ function ProductCard({ product }) {
     const defaultSize = sizes.length > 0 ? String(sizes[0]) : 'none';
     const defaultColor = colors.length > 0 ? colors[0] : 'none';
     dispatch(
-      addToCart({
+      addItemToCart({
         cartId: `${product.id}-${defaultSize}-${defaultColor}`,
         id: product.id,
         name: product.name,

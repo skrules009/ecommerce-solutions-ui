@@ -10,7 +10,7 @@ import {
   resetCheckout,
 } from '../redux/slices/checkoutSlice';
 import { createOrder } from '../redux/slices/orderSlice';
-import { clearCart, selectCartItems, selectCartTotal, selectCartShipping, selectCartTax, selectCartGrandTotal } from '../redux/slices/cartSlice';
+import { clearCartAsync, selectCartItems, selectCartTotal, selectCartShipping, selectCartTax, selectCartGrandTotal } from '../redux/slices/cartSlice';
 import { formatPrice, getImageUrl } from '../utils/imageHelpers';
 import '../styles/checkout.css';
 
@@ -280,68 +280,6 @@ function PaymentForm({ initial, onBack, onSubmit }) {
   );
 }
 
-/* ===== Old Card Payment Form (deprecated) ===== */
-const formatCardNumber_old = (v) =>
-  v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
-
-const formatExpiry_old = (v) =>
-  v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2');
-
-function PaymentForm_old({ initial, onBack, onSubmit }) {
-  const [form, setForm] = useState(initial);
-  const [errors, setErrors] = useState({});
-
-  const validate = () => {
-    const e = {};
-    if (!form.cardName?.trim()) e.cardName = 'Required';
-    if (!form.cardNumber?.replace(/\s/g, '') || form.cardNumber.replace(/\s/g, '').length < 13) e.cardNumber = 'Enter a valid card number';
-    if (!form.cardExpiry?.trim()) e.cardExpiry = 'Required';
-    if (!form.cardCvc?.trim() || form.cardCvc.length < 3) e.cardCvc = 'Enter a valid CVC';
-    return e;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const e2 = validate();
-    if (Object.keys(e2).length > 0) { setErrors(e2); return; }
-    onSubmit(form);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-        🔒 This is a demo — no real payment is processed.
-      </p>
-      <div className="checkout-form-grid">
-        <div className="form-field full-width">
-          <label htmlFor="card-name">Name on Card</label>
-          <input id="card-name" type="text" className={errors.cardName ? 'error' : ''} value={form.cardName || ''} onChange={(e) => setForm((p) => ({ ...p, cardName: e.target.value }))} placeholder="Jane Smith" autoComplete="cc-name" />
-          {errors.cardName && <span className="field-error">{errors.cardName}</span>}
-        </div>
-        <div className="form-field full-width">
-          <label htmlFor="card-number">Card Number</label>
-          <input id="card-number" type="text" inputMode="numeric" className={errors.cardNumber ? 'error' : ''} value={form.cardNumber || ''} onChange={(e) => setForm((p) => ({ ...p, cardNumber: formatCardNumber_old(e.target.value) }))} placeholder="1234 5678 9012 3456" autoComplete="cc-number" maxLength={19} />
-          {errors.cardNumber && <span className="field-error">{errors.cardNumber}</span>}
-        </div>
-        <div className="form-field">
-          <label htmlFor="card-expiry">Expiry Date</label>
-          <input id="card-expiry" type="text" inputMode="numeric" className={errors.cardExpiry ? 'error' : ''} value={form.cardExpiry || ''} onChange={(e) => setForm((p) => ({ ...p, cardExpiry: formatExpiry_old(e.target.value) }))} placeholder="MM/YY" autoComplete="cc-exp" maxLength={5} />
-          {errors.cardExpiry && <span className="field-error">{errors.cardExpiry}</span>}
-        </div>
-        <div className="form-field">
-          <label htmlFor="card-cvc">CVC</label>
-          <input id="card-cvc" type="text" inputMode="numeric" className={errors.cardCvc ? 'error' : ''} value={form.cardCvc || ''} onChange={(e) => setForm((p) => ({ ...p, cardCvc: e.target.value.replace(/\D/g, '').slice(0, 4) }))} placeholder="123" autoComplete="cc-csc" maxLength={4} />
-          {errors.cardCvc && <span className="field-error">{errors.cardCvc}</span>}
-        </div>
-      </div>
-      <div className="checkout-form-actions">
-        <button type="button" className="btn-checkout-back" onClick={onBack}>← Back</button>
-        <button type="submit" className="btn-checkout-next">Review Order →</button>
-      </div>
-    </form>
-  );
-}
-
 /* ===== Review Step ===== */
 function OrderReview({ items, shippingAddress, paymentMethod, subtotal, shipping, tax, grandTotal, onBack, onPlace, isLoading }) {
   const addr = shippingAddress;
@@ -475,7 +413,7 @@ function Checkout() {
         status: 'confirmed',
       };
       dispatch(createOrder(order));
-      dispatch(clearCart());
+      dispatch(clearCartAsync());
       dispatch(checkoutSuccess());
       dispatch(resetCheckout());
       navigate('/order-confirmation', { replace: true });

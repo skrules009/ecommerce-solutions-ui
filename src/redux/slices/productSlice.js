@@ -1,4 +1,82 @@
-import { createSlice, createSelector } from '@reduxjs/toolkit';
+import { createSlice, createSelector, createAsyncThunk } from '@reduxjs/toolkit';
+import { productService, handleApiError } from '../../api/services';
+
+// ==================== ASYNC THUNKS ====================
+
+/**
+ * Fetch all products from API
+ */
+export const fetchProducts = createAsyncThunk(
+  'products/fetchAll',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await productService.getAllProducts();
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error));
+    }
+  }
+);
+
+/**
+ * Fetch single product by ID from API
+ */
+export const fetchProductById = createAsyncThunk(
+  'products/fetchById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await productService.getProductById(id);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error));
+    }
+  }
+);
+
+/**
+ * Create new product (admin)
+ */
+export const createProduct = createAsyncThunk(
+  'products/create',
+  async (productData, { rejectWithValue }) => {
+    try {
+      const response = await productService.createProduct(productData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error));
+    }
+  }
+);
+
+/**
+ * Update product (admin)
+ */
+export const updateProduct = createAsyncThunk(
+  'products/update',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await productService.updateProduct(id, data);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error));
+    }
+  }
+);
+
+/**
+ * Delete product (admin)
+ */
+export const deleteProduct = createAsyncThunk(
+  'products/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      await productService.deleteProduct(id);
+      return id;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error));
+    }
+  }
+);
 
 const initialState = {
   items: [],
@@ -15,6 +93,7 @@ const initialState = {
   selectedProduct: null,
   relatedProducts: [],
   reviews: [],
+  lastFetch: null, // Track when data was last fetched
 };
 
 /**
@@ -47,23 +126,6 @@ const productSlice = createSlice({
   name: 'products',
   initialState,
   reducers: {
-    fetchProductsStart(state) {
-      state.loading = true;
-      state.error = null;
-    },
-    fetchProductsSuccess(state, action) {
-      state.loading = false;
-      state.items = action.payload;
-      state.searchTerm = '';
-      state.filters = {};
-      state.filteredItems = action.payload;
-      state.pagination.currentPage = 1;
-      state.pagination.totalPages = Math.ceil(action.payload.length / state.pagination.pageSize);
-    },
-    fetchProductsFailure(state, action) {
-      state.loading = false;
-      state.error = action.payload;
-    },
     filterProducts(state, action) {
       state.filters = action.payload;
       state.filteredItems = applyAllFilters(state.items, action.payload, state.searchTerm);
@@ -106,12 +168,100 @@ const productSlice = createSlice({
       state.reviews = product ? (product.reviews || []) : [];
     },
   },
+  // ==================== EXTRA REDUCERS (Handle Async Thunks) ====================
+  extraReducers: (builder) => {
+    // ===== FETCH ALL PRODUCTS =====
+    builder.addCase(fetchProducts.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchProducts.fulfilled, (state, action) => {
+      state.loading = false;
+      state.items = action.payload;
+      state.searchTerm = '';
+      state.filters = {};
+      state.filteredItems = action.payload;
+      state.pagination.currentPage = 1;
+      state.pagination.totalPages = Math.ceil(action.payload.length / state.pagination.pageSize);
+      state.lastFetch = new Date().toISOString();
+    });
+    builder.addCase(fetchProducts.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.message || 'Failed to load products';
+    });
+
+    // ===== FETCH SINGLE PRODUCT =====
+    builder.addCase(fetchProductById.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchProductById.fulfilled, (state, action) => {
+      state.loading = false;
+      state.selectedProduct = action.payload;
+      // Merge into items array if not already there
+      const existingIndex = state.items.findIndex((p) => p.id === action.payload.id);
+      if (existingIndex >= 0) {
+        state.items[existingIndex] = action.payload;
+      } else {
+        state.items.push(action.payload);
+      }
+    });
+    builder.addCase(fetchProductById.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.message || 'Failed to load product';
+    });
+
+    // ===== CREATE PRODUCT =====
+    builder.addCase(createProduct.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(createProduct.fulfilled, (state, action) => {
+      state.loading = false;
+      state.items.unshift(action.payload);
+      state.filteredItems = applyAllFilters(state.items, state.filters, state.searchTerm);
+    });
+    builder.addCase(createProduct.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.message || 'Failed to create product';
+    });
+
+    // ===== UPDATE PRODUCT =====
+    builder.addCase(updateProduct.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(updateProduct.fulfilled, (state, action) => {
+      state.loading = false;
+      const index = state.items.findIndex((p) => p.id === action.payload.id);
+      if (index >= 0) {
+        state.items[index] = action.payload;
+      }
+      state.filteredItems = applyAllFilters(state.items, state.filters, state.searchTerm);
+    });
+    builder.addCase(updateProduct.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.message || 'Failed to update product';
+    });
+
+    // ===== DELETE PRODUCT =====
+    builder.addCase(deleteProduct.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(deleteProduct.fulfilled, (state, action) => {
+      state.loading = false;
+      state.items = state.items.filter((p) => p.id !== action.payload);
+      state.filteredItems = applyAllFilters(state.items, state.filters, state.searchTerm);
+    });
+    builder.addCase(deleteProduct.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.message || 'Failed to delete product';
+    });
+  },
 });
 
 export const {
-  fetchProductsStart,
-  fetchProductsSuccess,
-  fetchProductsFailure,
   filterProducts,
   searchProducts,
   clearFilters,

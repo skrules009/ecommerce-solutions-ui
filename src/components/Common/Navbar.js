@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../redux/slices/authSlice';
+import { logoutUser } from '../../redux/slices/authSlice';
 import { toggleDarkMode } from '../../redux/slices/uiSlice';
 import { selectCartItemCount } from '../../redux/slices/cartSlice';
 import '../../styles/navbar.css';
@@ -22,7 +22,7 @@ function Navbar() {
   const darkMode = useSelector((state) => state.ui.darkMode);
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutUser());
     setMenuOpen(false);
     setUserDropdownOpen(false);
     navigate('/');
@@ -97,13 +97,13 @@ function Navbar() {
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   aria-label="User menu"
                 >
-                  👤 {user?.name || 'User'}
+                  👤 {user?.firstName || user?.name || 'User'}
                 </button>
                 {userDropdownOpen && (
                   <div className="user-dropdown-menu">
                     <div className="dropdown-header">
                       <div className="dropdown-user-info">
-                        <div className="dropdown-user-name">{user?.name}</div>
+                        <div className="dropdown-user-name">{user?.firstName} {user?.lastName}</div>
                         <div className="dropdown-user-email">{user?.email}</div>
                       </div>
                     </div>

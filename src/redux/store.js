@@ -5,6 +5,9 @@ import cartReducer from './slices/cartSlice';
 import orderReducer from './slices/orderSlice';
 import checkoutReducer from './slices/checkoutSlice';
 import uiReducer from './slices/uiSlice';
+import paymentReducer from './slices/paymentSlice';
+import inventoryReducer from './slices/inventorySlice';
+import searchReducer from './slices/searchSlice';
 
 /**
  * Reads the persisted auth token from localStorage to hydrate the auth slice
@@ -31,6 +34,9 @@ export const store = configureStore({
     orders: orderReducer,
     checkout: checkoutReducer,
     ui: uiReducer,
+    payment: paymentReducer,
+    inventory: inventoryReducer,
+    search: searchReducer,
   },
   preloadedState: {
     auth: loadAuthState(),

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateUserProfile, logout } from '../redux/slices/authSlice';
+import { updateUserProfile, logoutUser } from '../redux/slices/authSlice';
 import { selectOrders } from '../redux/slices/orderSlice';
 import '../styles/account.css';
 
@@ -16,7 +16,8 @@ function Account() {
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
-    name: user?.name || '',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
     email: user?.email || '',
     phone: user?.phone || '',
     dob: user?.dob || '',
@@ -58,8 +59,12 @@ function Account() {
     e.preventDefault();
     setErrors({});
 
-    if (!profileForm.name?.trim()) {
-      setErrors({ name: 'Name is required' });
+    if (!profileForm.firstName?.trim()) {
+      setErrors({ firstName: 'First name is required' });
+      return;
+    }
+    if (!profileForm.lastName?.trim()) {
+      setErrors({ lastName: 'Last name is required' });
       return;
     }
 
@@ -180,8 +185,12 @@ function Account() {
               {!editMode ? (
                 <div className="profile-view">
                   <div className="profile-item">
-                    <span className="profile-label">Name:</span>
-                    <span className="profile-value">{user?.name}</span>
+                    <span className="profile-label">First Name:</span>
+                    <span className="profile-value">{user?.firstName}</span>
+                  </div>
+                  <div className="profile-item">
+                    <span className="profile-label">Last Name:</span>
+                    <span className="profile-value">{user?.lastName}</span>
                   </div>
                   <div className="profile-item">
                     <span className="profile-label">Email:</span>
@@ -199,15 +208,27 @@ function Account() {
               ) : (
                 <form onSubmit={handleProfileSubmit} className="profile-form">
                   <div className="form-group">
-                    <label htmlFor="name">Full Name</label>
+                    <label htmlFor="firstName">First Name</label>
                     <input
-                      id="name"
+                      id="firstName"
                       type="text"
-                      value={profileForm.name}
-                      onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                      className={errors.name ? 'error' : ''}
+                      value={profileForm.firstName}
+                      onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                      className={errors.firstName ? 'error' : ''}
                     />
-                    {errors.name && <span className="error-text">{errors.name}</span>}
+                    {errors.firstName && <span className="error-text">{errors.firstName}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="lastName">Last Name</label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      value={profileForm.lastName}
+                      onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                      className={errors.lastName ? 'error' : ''}
+                    />
+                    {errors.lastName && <span className="error-text">{errors.lastName}</span>}
                   </div>
 
                   <div className="form-group">
@@ -443,7 +464,7 @@ function Account() {
                     <span className="address-badge">Default</span>
                   </div>
                   <p>
-                    {user?.name}<br />
+                    {user?.firstName} {user?.lastName}<br />
                     {user?.email}
                   </p>
                   <div className="address-actions">
@@ -527,7 +548,7 @@ function Account() {
                   className="btn-logout"
                   onClick={() => {
                     if (window.confirm('Are you sure you want to log out?')) {
-                      dispatch(logout());
+                      dispatch(logoutUser());
                     }
                   }}
                 >
