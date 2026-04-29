@@ -46,10 +46,26 @@ export const createCart = createAsyncThunk(
  */
 export const addItemToCart = createAsyncThunk(
   'cart/addItem',
-  async ({ cartId, productId, quantity }, { rejectWithValue }) => {
+  async ({ cartId, id, productId, name, price, quantity }, { rejectWithValue, getState }) => {
     try {
-      const response = await cartService.addItemToCart(cartId, {
-        productId,
+      let numericCartId = cartId;
+      
+      // If no cartId exists, create a temporary one (will be replaced by API response)
+      if (!numericCartId) {
+        numericCartId = Math.floor(Math.random() * 100000); // Temporary ID
+      } else {
+        numericCartId = parseInt(cartId, 10);
+      }
+      
+      if (isNaN(numericCartId)) {
+        return rejectWithValue('Invalid cartId: must be an integer');
+      }
+      
+      const response = await cartService.addItemToCart(numericCartId, {
+        productId: productId || id,
+        productName: name,
+        productSku: '', // Add productSku if available in product data
+        unitPrice: price,
         quantity: quantity || 1,
       });
       return response.data;
@@ -79,10 +95,11 @@ export const removeItemFromCart = createAsyncThunk(
  */
 export const updateCartItem = createAsyncThunk(
   'cart/updateItem',
-  async ({ cartId, cartItemId, quantity }, { rejectWithValue }) => {
+  async ({ cartId, cartItemId, quantity, unitPrice }, { rejectWithValue }) => {
     try {
       const response = await cartService.updateCartItem(cartId, cartItemId, {
         quantity,
+        unitPrice
       });
       return response.data;
     } catch (error) {
@@ -109,9 +126,13 @@ export const clearCartAsync = createAsyncThunk(
 /**
  * Recomputes totalPrice, totalItems, shippingCost, and tax from the items array.
  * Free shipping for all orders; tax rate is 18% GST (Indian).
+ * Handles both API format (unitPrice) and local format (price)
  */
 function recalculateTotals(state) {
-  state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  state.totalPrice = state.items.reduce((sum, item) => {
+    const price = item.totalPrice || (item.unitPrice || item.price) * item.quantity;
+    return sum + price;
+  }, 0);
   state.totalItems = state.items.reduce((sum, item) => sum + item.quantity, 0);
   state.shippingCost = 0; // Free shipping for all orders
   state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
@@ -174,7 +195,16 @@ const cartSlice = createSlice({
       state.loading = false;
       state.id = action.payload.id;
       state.items = action.payload.items || [];
-      recalculateTotals(state);
+      // Use API totals if available, otherwise recalculate
+      if (action.payload.totalPrice !== undefined && action.payload.totalItems !== undefined) {
+        state.totalPrice = action.payload.totalPrice;
+        state.totalItems = action.payload.totalItems;
+        state.shippingCost = 0; // Free shipping
+        // Tax = (Subtotal + Shipping) * TAX_RATE
+        state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
+      } else {
+        recalculateTotals(state);
+      }
       state.lastUpdated = new Date().toISOString();
     });
     builder.addCase(fetchCartByCustomerId.rejected, (state, action) => {
@@ -190,8 +220,17 @@ const cartSlice = createSlice({
     builder.addCase(createCart.fulfilled, (state, action) => {
       state.loading = false;
       state.id = action.payload.id;
-      state.items = [];
-      recalculateTotals(state);
+      state.items = action.payload.items || [];
+      // Use API totals if available
+      if (action.payload.totalPrice !== undefined) {
+        state.totalPrice = action.payload.totalPrice;
+        state.totalItems = action.payload.totalItems || 0;
+        state.shippingCost = 0;
+        // Tax = (Subtotal + Shipping) * TAX_RATE
+        state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
+      } else {
+        recalculateTotals(state);
+      }
     });
     builder.addCase(createCart.rejected, (state, action) => {
       state.loading = false;
@@ -203,8 +242,21 @@ const cartSlice = createSlice({
       state.error = null;
     });
     builder.addCase(addItemToCart.fulfilled, (state, action) => {
+      // Update cart ID from API response if it was null (first item added)
+      if (!state.id && (action.payload.id || action.payload.cartId)) {
+        state.id = action.payload.id || action.payload.cartId;
+      }
       state.items = action.payload.items || [];
-      recalculateTotals(state);
+      // Use API totals if available
+      if (action.payload.totalPrice !== undefined && action.payload.totalItems !== undefined) {
+        state.totalPrice = action.payload.totalPrice;
+        state.totalItems = action.payload.totalItems;
+        state.shippingCost = 0;
+        // Tax = (Subtotal + Shipping) * TAX_RATE
+        state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
+      } else {
+        recalculateTotals(state);
+      }
       state.lastUpdated = new Date().toISOString();
     });
     builder.addCase(addItemToCart.rejected, (state, action) => {
@@ -217,7 +269,16 @@ const cartSlice = createSlice({
     });
     builder.addCase(removeItemFromCart.fulfilled, (state, action) => {
       state.items = action.payload.items || [];
-      recalculateTotals(state);
+      // Use API totals if available
+      if (action.payload.totalPrice !== undefined && action.payload.totalItems !== undefined) {
+        state.totalPrice = action.payload.totalPrice;
+        state.totalItems = action.payload.totalItems;
+        state.shippingCost = 0;
+        // Tax = (Subtotal + Shipping) * TAX_RATE
+        state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
+      } else {
+        recalculateTotals(state);
+      }
       state.lastUpdated = new Date().toISOString();
     });
     builder.addCase(removeItemFromCart.rejected, (state, action) => {
@@ -230,7 +291,16 @@ const cartSlice = createSlice({
     });
     builder.addCase(updateCartItem.fulfilled, (state, action) => {
       state.items = action.payload.items || [];
-      recalculateTotals(state);
+      // Use API totals if available
+      if (action.payload.totalPrice !== undefined && action.payload.totalItems !== undefined) {
+        state.totalPrice = action.payload.totalPrice;
+        state.totalItems = action.payload.totalItems;
+        state.shippingCost = 0;
+        // Tax = (Subtotal + Shipping) * TAX_RATE
+        state.tax = parseFloat(((state.totalPrice + state.shippingCost) * TAX_RATE).toFixed(2));
+      } else {
+        recalculateTotals(state);
+      }
       state.lastUpdated = new Date().toISOString();
     });
     builder.addCase(updateCartItem.rejected, (state, action) => {
@@ -243,7 +313,10 @@ const cartSlice = createSlice({
     });
     builder.addCase(clearCartAsync.fulfilled, (state) => {
       state.items = [];
-      recalculateTotals(state);
+      state.totalPrice = 0;
+      state.totalItems = 0;
+      state.shippingCost = 0;
+      state.tax = 0;
       state.lastUpdated = new Date().toISOString();
     });
     builder.addCase(clearCartAsync.rejected, (state, action) => {

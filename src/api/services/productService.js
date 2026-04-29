@@ -13,21 +13,21 @@ export const productService = {
    * Get all products
    * @returns {Promise}
    */
-  getAllProducts: () => axiosInstance.get('/products'),
+  getAllProducts: () => axiosInstance.get('/Product'),
 
   /**
    * Get product by ID
    * @param {number} id - Product ID
    * @returns {Promise}
    */
-  getProductById: (id) => axiosInstance.get(`/products/${id}`),
+  getProductById: (id) => axiosInstance.get(`/Product/${id}`),
 
   /**
    * Create a new product
    * @param {Object} productData - Product data
    * @returns {Promise}
    */
-  createProduct: (productData) => axiosInstance.post('/products', productData),
+  createProduct: (productData) => axiosInstance.post('/Product', productData),
 
   /**
    * Update an existing product
@@ -35,14 +35,14 @@ export const productService = {
    * @param {Object} productData - Updated product data
    * @returns {Promise}
    */
-  updateProduct: (id, productData) => axiosInstance.put(`/products/${id}`, productData),
+  updateProduct: (id, productData) => axiosInstance.put(`/Product/${id}`, productData),
 
   /**
    * Delete a product
    * @param {number} id - Product ID
    * @returns {Promise}
    */
-  deleteProduct: (id) => axiosInstance.delete(`/products/${id}`)
+  deleteProduct: (id) => axiosInstance.delete(`/Product/${id}`)
 };
 
 export default productService;

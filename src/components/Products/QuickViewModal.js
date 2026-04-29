@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addItemToCart } from '../../redux/slices/cartSlice';
 import { formatPrice, getImageUrl, getStarArray } from '../../utils/imageHelpers';
 
@@ -11,6 +11,7 @@ import { formatPrice, getImageUrl, getStarArray } from '../../utils/imageHelpers
  */
 function QuickViewModal({ product, onClose }) {
   const dispatch = useDispatch();
+  const cartId = useSelector((state) => state.cart.id);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
 
@@ -36,8 +37,9 @@ function QuickViewModal({ product, onClose }) {
   const handleAddToCart = () => {
     dispatch(
       addItemToCart({
-        cartId: `${product.id}-${selectedSize || 'none'}-${selectedColor || 'none'}`,
+        cartId, // Can be null - thunk will generate temporary ID
         id: product.id,
+        productId: product.id,
         name: product.name,
         price: product.price,
         image: product.images?.[0] || product.image,

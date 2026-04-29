@@ -9,18 +9,20 @@
  * - Catalog Service: 7003
  * - Cart Service: 7004
  * - Inventory Service: 7005
+ * - Order Service: 7000
  * - Payment Service: 7006
  * - Search Service: 7007
  */
 
 const API_BASE_URLS = {
-  AUTH: process.env.REACT_APP_AUTH_URL || 'https://localhost:7002/api/auth',
-  CUSTOMER: process.env.REACT_APP_CUSTOMER_URL || 'https://localhost:7001/api/customer',
-  CATALOG: process.env.REACT_APP_CATALOG_URL || 'https://localhost:7003/api/catalog',
-  CART: process.env.REACT_APP_CART_URL || 'https://localhost:7004/api/cart',
-  INVENTORY: process.env.REACT_APP_INVENTORY_URL || 'https://localhost:7005/api/inventory',
-  PAYMENT: process.env.REACT_APP_PAYMENT_URL || 'https://localhost:7006/api/payment',
-  SEARCH: process.env.REACT_APP_SEARCH_URL || 'https://localhost:7007/api/search'
+  AUTH: 'https://localhost:7002/api/Auth/',
+  CUSTOMER: 'https://localhost:7001/api/',
+  CATALOG: 'https://localhost:7003/api/',
+  CART: 'https://localhost:7004/api/',
+  INVENTORY: 'https://localhost:7005/api/',
+  ORDER: 'https://localhost:7000/api/',
+  PAYMENT: 'https://localhost:7006/api/',
+  SEARCH: 'https://localhost:7007/api/'
 };
 
 // Request timeout (in milliseconds)
